@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(pkill:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp:*)",
+      "Bash(npm run build:*)",
+      "Bash(node:*)",
+      "Read(//Users/stefanyharma/**)",
+      "Bash(git init:*)",
+      "Read(//usr/bin/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

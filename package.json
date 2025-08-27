@@ -3,11 +3,21 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+<<<<<<< HEAD
+=======
+  "homepage": "https://ssophier.github.io/quiz-project1",
+>>>>>>> 5395c3d (Initial commit)
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+<<<<<<< HEAD
     "preview": "vite preview"
+=======
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+>>>>>>> 5395c3d (Initial commit)
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -24,6 +34,10 @@
     "eslint": "^9.15.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
+<<<<<<< HEAD
+=======
+    "gh-pages": "^6.1.1",
+>>>>>>> 5395c3d (Initial commit)
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "~5.6.2",
