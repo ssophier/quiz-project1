@@ -134,16 +134,9 @@ class MailerLiteService {
       maxScore: number;
     }
   ): Promise<MailerLiteResponse> {
-    // Debug logging
-    console.log('Group mapping configuration:', this.groupMapping);
-    console.log('Assessment result:', assessmentResult);
-
     // Determine which group to add the subscriber to
     const groupId = assessmentResult ? this.getGroupId(assessmentResult.category) : this.groupMapping.default;
     const groups = groupId ? [groupId] : [];
-
-    console.log(`Selected group ID: ${groupId} for category: ${assessmentResult?.category}`);
-    console.log('Groups array:', groups);
 
     const subscriber: MailerLiteSubscriber = {
       email,
@@ -160,15 +153,13 @@ class MailerLiteService {
       status: 'active'
     };
 
-    console.log('Final subscriber object:', subscriber);
-
     const result = await this.addSubscriber(subscriber);
 
     // Log group assignment for debugging
     if (result.success && groupId) {
-      console.log(`✅ Successfully added subscriber to group: ${assessmentResult?.category} (ID: ${groupId})`);
+      console.log(`✅ Subscriber added to ${assessmentResult?.category} group (ID: ${groupId})`);
     } else if (result.success && !groupId) {
-      console.log('⚠️ Subscriber added without group assignment - no group ID configured');
+      console.log('⚠️ Subscriber added without group - no group ID configured');
     } else {
       console.log('❌ Failed to add subscriber:', result.error);
     }

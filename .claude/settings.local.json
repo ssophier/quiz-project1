@@ -9,7 +9,8 @@
       "Bash(node:*)",
       "Read(//Users/stefanyharma/**)",
       "Bash(git init:*)",
-      "Read(//usr/bin/**)"
+      "Read(//usr/bin/**)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
