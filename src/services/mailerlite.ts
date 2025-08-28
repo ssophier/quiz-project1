@@ -20,7 +20,7 @@ class MailerLiteService {
   private apiKey: string | null = null;
   private baseUrl = 'https://connect.mailerlite.com/api';
 
-  // Group IDs for each assessment category
+  // Group IDs for each assessment category - loaded from environment variables
   private groupMapping = {
     content_creator: import.meta.env?.VITE_MAILERLITE_CONTENT_CREATOR_GROUP_ID || null,
     getting_there: import.meta.env?.VITE_MAILERLITE_GETTING_THERE_GROUP_ID || null,
@@ -124,6 +124,16 @@ class MailerLiteService {
     return groupId || this.groupMapping.default;
   }
 
+  // Convert category key to human-readable format
+  private formatQuizResult(category: string): string {
+    const categoryMap = {
+      content_creator: 'Content Creator',
+      getting_there: 'Getting There',
+      conversion_pro: 'Conversion Pro'
+    };
+    return categoryMap[category as keyof typeof categoryMap] || category;
+  }
+
   // Method to add subscriber with assessment results and group assignment
   async addAssessmentSubscriber(
     email: string, 
@@ -138,11 +148,16 @@ class MailerLiteService {
     const groupId = assessmentResult ? this.getGroupId(assessmentResult.category) : this.groupMapping.default;
     const groups = groupId ? [groupId] : [];
 
+    // Format the quiz result for human readability
+    const quizResult = assessmentResult ? this.formatQuizResult(assessmentResult.category) : 'Unknown';
+
     const subscriber: MailerLiteSubscriber = {
       email,
       fields: {
         name,
-        // Add custom fields for assessment data
+        // Add custom field for human-readable quiz result
+        quiz_result: quizResult,
+        // Add other custom fields for assessment data
         ...(assessmentResult && {
           assessment_score: assessmentResult.score.toString(),
           assessment_category: assessmentResult.category,
@@ -155,11 +170,13 @@ class MailerLiteService {
 
     const result = await this.addSubscriber(subscriber);
 
-    // Log group assignment for debugging
+    // Log group assignment and custom field for debugging
     if (result.success && groupId) {
       console.log(`✅ Subscriber added to ${assessmentResult?.category} group (ID: ${groupId})`);
+      console.log(`📊 Quiz result field: "${quizResult}" | Score: ${assessmentResult?.score}/${assessmentResult?.maxScore}`);
     } else if (result.success && !groupId) {
       console.log('⚠️ Subscriber added without group - no group ID configured');
+      console.log(`📊 Quiz result field: "${quizResult}"`);
     } else {
       console.log('❌ Failed to add subscriber:', result.error);
     }
