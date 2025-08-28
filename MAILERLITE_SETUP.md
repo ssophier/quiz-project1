@@ -52,9 +52,40 @@ You can use these fields to:
 
 ## Advanced Configuration
 
-### Adding Subscribers to Specific Groups
+### Automatic Group Segmentation by Quiz Results
+
+The integration automatically assigns subscribers to different groups based on their assessment results, allowing you to send targeted email automations.
+
+**Step 1: Create Groups in MailerLite**
+1. Go to your MailerLite dashboard → Subscribers → Groups
+2. Create three groups:
+   - "Content Creator" (for low scores: 0-8 points)
+   - "Getting There" (for medium scores: 9-16 points) 
+   - "Conversion Pro" (for high scores: 17+ points)
+3. Copy each group ID (found in the group settings)
+
+**Step 2: Configure Group IDs**
+Add the group IDs to your `.env` file:
+```
+# Category-specific groups for automatic segmentation
+VITE_MAILERLITE_CONTENT_CREATOR_GROUP_ID=12345
+VITE_MAILERLITE_GETTING_THERE_GROUP_ID=12346
+VITE_MAILERLITE_CONVERSION_PRO_GROUP_ID=12347
+
+# Optional fallback group (if category groups not set)
+VITE_MAILERLITE_GROUP_ID=your_default_group_id
+```
+
+**How It Works:**
+- Low scorers (0-8 points) → Content Creator group
+- Medium scorers (9-16 points) → Getting There group  
+- High scorers (17+ points) → Conversion Pro group
+- If category groups aren't configured, uses default group
+
+### Manual Group Assignment
+If you prefer a single group for all quiz takers:
 1. In MailerLite, create or find your group ID
-2. Add it to your `.env` file:
+2. Add only the default group to your `.env` file:
    ```
    VITE_MAILERLITE_GROUP_ID=your_group_id
    ```

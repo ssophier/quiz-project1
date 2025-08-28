@@ -20,6 +20,15 @@ class MailerLiteService {
   private apiKey: string | null = null;
   private baseUrl = 'https://connect.mailerlite.com/api';
 
+  // Group IDs for each assessment category
+  private groupMapping = {
+    content_creator: import.meta.env?.VITE_MAILERLITE_CONTENT_CREATOR_GROUP_ID || null,
+    getting_there: import.meta.env?.VITE_MAILERLITE_GETTING_THERE_GROUP_ID || null,
+    conversion_pro: import.meta.env?.VITE_MAILERLITE_CONVERSION_PRO_GROUP_ID || null,
+    // Fallback default group
+    default: import.meta.env?.VITE_MAILERLITE_GROUP_ID || null
+  };
+
   constructor() {
     // API key should be set via environment variables in production
     this.apiKey = import.meta.env?.VITE_MAILERLITE_API_KEY || null;
@@ -109,7 +118,13 @@ class MailerLiteService {
     }
   }
 
-  // Method to add subscriber with assessment results
+  // Get group ID for assessment category
+  private getGroupId(category: string): string | null {
+    const groupId = this.groupMapping[category as keyof typeof this.groupMapping];
+    return groupId || this.groupMapping.default;
+  }
+
+  // Method to add subscriber with assessment results and group assignment
   async addAssessmentSubscriber(
     email: string, 
     name: string, 
@@ -119,6 +134,10 @@ class MailerLiteService {
       maxScore: number;
     }
   ): Promise<MailerLiteResponse> {
+    // Determine which group to add the subscriber to
+    const groupId = assessmentResult ? this.getGroupId(assessmentResult.category) : this.groupMapping.default;
+    const groups = groupId ? [groupId] : [];
+
     const subscriber: MailerLiteSubscriber = {
       email,
       fields: {
@@ -130,10 +149,20 @@ class MailerLiteService {
           assessment_percentage: Math.round((assessmentResult.score / assessmentResult.maxScore) * 100).toString()
         })
       },
+      groups,
       status: 'active'
     };
 
-    return this.addSubscriber(subscriber);
+    const result = await this.addSubscriber(subscriber);
+
+    // Log group assignment for debugging
+    if (result.success && groupId) {
+      console.log(`Successfully added subscriber to group: ${assessmentResult?.category} (ID: ${groupId})`);
+    } else if (result.success && !groupId) {
+      console.log('Subscriber added without group assignment - no group ID configured');
+    }
+
+    return result;
   }
 }
 
