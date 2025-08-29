@@ -134,6 +134,64 @@ class MailerLiteService {
     return categoryMap[category as keyof typeof categoryMap] || category;
   }
 
+  // Test method to verify API connection and group IDs
+  async testConnection(): Promise<MailerLiteResponse> {
+    if (!this.apiKey) {
+      return {
+        success: false,
+        error: 'MailerLite API key not configured'
+      };
+    }
+
+    try {
+      // Test basic API connection by getting groups
+      const groupsResponse = await this.getGroups();
+      
+      if (!groupsResponse.success) {
+        return groupsResponse;
+      }
+
+      // Verify our configured group IDs exist
+      const groups = groupsResponse.data?.data || [];
+      const groupIds = groups.map((group: any) => group.id);
+      
+      const missingGroups: string[] = [];
+      
+      // Check each configured group ID
+      Object.entries(this.groupMapping).forEach(([category, groupId]) => {
+        if (groupId && !groupIds.includes(groupId)) {
+          missingGroups.push(`${category}: ${groupId}`);
+        }
+      });
+
+      if (missingGroups.length > 0) {
+        return {
+          success: false,
+          error: `The following configured group IDs were not found: ${missingGroups.join(', ')}`
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          message: 'API connection successful',
+          availableGroups: groups.map((group: any) => ({
+            id: group.id,
+            name: group.name
+          })),
+          configuredGroups: this.groupMapping
+        }
+      };
+
+    } catch (error) {
+      console.error('MailerLite connection test failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Connection test failed'
+      };
+    }
+  }
+
   // Method to add subscriber with assessment results and group assignment
   async addAssessmentSubscriber(
     email: string, 
@@ -146,8 +204,7 @@ class MailerLiteService {
   ): Promise<MailerLiteResponse> {
     // Determine which group to add the subscriber to
     const groupId = assessmentResult ? this.getGroupId(assessmentResult.category) : this.groupMapping.default;
-    const groups = groupId ? [groupId] : [];
-
+    
     // Format the quiz result for human readability
     const quizResult = assessmentResult ? this.formatQuizResult(assessmentResult.category) : 'Unknown';
 
@@ -164,21 +221,33 @@ class MailerLiteService {
           assessment_percentage: Math.round((assessmentResult.score / assessmentResult.maxScore) * 100).toString()
         })
       },
-      groups,
+      // Only include groups array if we have a valid group ID
+      ...(groupId && { groups: [groupId] }),
       status: 'active'
     };
 
+    // Enhanced logging before making the API call
+    console.log('🚀 Adding subscriber to MailerLite:', {
+      email,
+      category: assessmentResult?.category,
+      groupId,
+      groupsArray: groupId ? [groupId] : 'none'
+    });
+
     const result = await this.addSubscriber(subscriber);
 
-    // Log group assignment and custom field for debugging
+    // Enhanced logging after the API call
     if (result.success && groupId) {
-      console.log(`✅ Subscriber added to ${assessmentResult?.category} group (ID: ${groupId})`);
-      console.log(`📊 Quiz result field: "${quizResult}" | Score: ${assessmentResult?.score}/${assessmentResult?.maxScore}`);
+      console.log(`✅ Subscriber successfully added to ${assessmentResult?.category} group (ID: ${groupId})`);
+      console.log(`📊 Quiz result: "${quizResult}" | Score: ${assessmentResult?.score}/${assessmentResult?.maxScore}`);
+      console.log('📋 Full API response:', result.data);
     } else if (result.success && !groupId) {
       console.log('⚠️ Subscriber added without group - no group ID configured');
-      console.log(`📊 Quiz result field: "${quizResult}"`);
+      console.log(`📊 Quiz result: "${quizResult}"`);
+      console.log('📋 API response:', result.data);
     } else {
       console.log('❌ Failed to add subscriber:', result.error);
+      console.log('📋 Full error response:', result);
     }
 
     return result;
